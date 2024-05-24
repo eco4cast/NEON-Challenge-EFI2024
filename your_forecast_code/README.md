@@ -1,8 +1,6 @@
-# Forecast code
+# Your forecast code
 
-In the `run_forecast.R` script include the forecast workflow to generate a real-time forecast. The example model from the tutorial has be made into a function (`R/generate_example_forecast`) and is shown as an example. Once you have successfully modified the script to generate *your* forecast you can automate the submission steps (see below)!
-
-Your model can either be a function (as has been shown here) or you can write the code directly in this script. 
+In the `forecast_code_template.R` script include the forecast workflow to generate a real-time forecast. The example model from the workshop has been included in here to demonstrate some simple building blocks for a forecast as an example. Once you have successfully modified the script to generate *your* forecast you can automate the submission steps (see below)!
 
 # Workflow automation
 
@@ -16,7 +14,7 @@ To automate your forecast, the workflow needs to be fully reproducible. The envi
 
 > A container is a standard unit of software that packages up code and all its dependencies so the application runs quickly and reliably from one computing environment to another. Containers isolate software from its environment and ensure that it works uniformly despite differences for instance between development and staging.
 
-We will utilise a container from the `RockerProject` a Docker container that has R installed as well as some pre-installed packages. The VERA forecast Challenge has a container available which has the vera4castHelper package (plus tidyverse and other commonly used packages) already installed. We'll use the `rqthomas/vera-rocker:latest` container. 
+We will utilise a container from the `RockerProject` a Docker container that has R installed as well as some pre-installed packages. The NEON forecast Challenge has a container available which has the `neon4cast` package (plus tidyverse and other commonly used packages) already installed. We'll use the `eco4cast/rocker-neon4cast` container. 
 
 ## 3 The platform - Github Actions
 
@@ -34,15 +32,15 @@ A basic description of a Github action workflow:
 
 -   `jobs` this is what you are telling the machine to do. You can see that within the job we have other instructions that tell the machine what `container` to use and the various `steps` in the job.
 
--   We use a container `image` that has the `vera4castHelpers` package plus others installed (`rqthomas/vera-rocker`).
+-   We use a container `image` that has the `neon4cast` package plus others installed (`eco4cast/rocker-neon4cast`).
 
 -   The first step is to `Checkout repo` which uses a pre-made action `actions/checkout` to get a copy of the Github repo.
 
--   Next, within the container, we run R script `run_forecast.R` from the forecast_code directory - this is your forecast code that generates a forecast file and has code to submit the saved forecast to the VERA Challenge.
+-   Next, within the container, we run R script `forecast_code_template.R` from the your_forecast_code directory - this is your forecast code that generates a forecast file and has code to submit the saved forecast to the NEON Challenge.
 
 Note: the indentation matters, make sure the indentation is as formatted here!
 
-Because this is a scheduled workflow this will run everyday, submitting your forecast to the Challenge. As long as your `run_forecast.R` has all the code to do this!
+Because this is a scheduled workflow this will run everyday, submitting your forecast to the Challenge. As long as your `forecast_code_template.R` has all the code to do this!
 
 ```         
 on:
@@ -54,7 +52,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: rqthomas/vera-rocker:latest
+      image: eco4cast/rocker-neon4cast
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
@@ -63,20 +61,22 @@ jobs:
 
 # Point to the right path, run the right Rscript command
       - name: Run automatic forecast submission
-        run: Rscript forecast_code/run_forecast.R
+        run: Rscript your_forecast_code/forecast_code_template.R
 ```
 
 ## 4 Let's try and put this together
 
 ### 4.1 Writing your forecast code
 
-Make sure that the `run_forecast` in the forecast_code directory contains all the code needed to generate your forecast and submit it to the Challenge (read targets, fit model, generate forecast, submit etc.).
+Make sure that the `forecast_code_template.R` in the your_forecast_code directory contains all the code needed to generate your forecast and submit it to the Challenge (read targets, fit model, generate forecast, submit etc.).
 
 Note: if you move this file or want to use a script that is stored elsewhere in the repository make sure you change the paths in the `submit_forecast.yaml`.
 
 ### 4.2 Enable Actions
 
 In Github, go to your repository and navigate to the ACTIONS tab and make sure they are enabled. If you don't see an Actions tab (it should be between Pull Requests and Projects) go to Settings \> Actions \> General and check the Allow actions and reusable workflows.
+
+Note: Actions are disabled if their is inactivity in the repository for 60 days (no new pushes). You will need to go in an re-enable them if this happens. 
 
 ### 4.3 Test the Action
 

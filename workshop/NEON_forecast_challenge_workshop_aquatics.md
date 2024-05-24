@@ -3,6 +3,7 @@
     challenge](#introduction-to-neon-forecast-challenge)
     -   [2.1 Aquatics challenge](#aquatics-challenge)
     -   [2.2 Submission requirements](#submission-requirements)
+        -   [2.2.1 File format](#file-format)
 -   [3 The forecasting workflow](#the-forecasting-workflow)
     -   [3.1 Read in the data](#read-in-the-data)
     -   [3.2 Visualise the data](#visualise-the-data)
@@ -12,12 +13,15 @@
         -   [4.1.2 Download future weather
             forecasts](#download-future-weather-forecasts)
 -   [5 Linear model with covariates](#linear-model-with-covariates)
-    -   [5.1 Specify forecast model](#specify-forecast-model)
-    -   [5.2 Convert to EFI standard for
+    -   [5.1 Generate a single site
+        forecast](#generate-a-single-site-forecast)
+    -   [5.2 Generate a forecast for multiple
+        sites](#generate-a-forecast-for-multiple-sites)
+    -   [5.3 Convert to EFI standard for
         submission](#convert-to-efi-standard-for-submission)
-    -   [5.3 Submit forecast](#submit-forecast)
-    -   [5.4 TASKS](#tasks)
-    -   [5.5 Register your participation](#register-your-participation)
+    -   [5.4 Submit forecast](#submit-forecast)
+    -   [5.5 TASKS](#tasks)
+    -   [5.6 Register your participation](#register-your-participation)
 
 # 1 This R markdown document
 
@@ -134,41 +138,54 @@ realizations of future conditions) or a distribution forecast (e.g. a
 normal distribution), specified in the family and parameter columns of
 the forecast file.
 
-For an ensemble forecast, the `family` column uses the word `ensemble`
-to designate that it is a ensemble forecast and the parameter column is
-the ensemble member number (1, 2, 3 …). For a distribution forecast, the
-`family` column describes the type of distribution and the parameter
-column must have the parameterizations of that distribution for each
-forecasted variable, site_id, and datetime. The following distributions
-are currently supported by the Challenge (family:parameters):
+### 2.2.1 File format
 
--   `lognormal`: `mu`, `sigma`
+The file is a csv format with the following columns:
 
--   `normal`: `mu`, `sigma`
+-   `project_id`: use `neon4cast`.
+-   `model_id`: the short name of the model defined as the `model_id` in
+    the file name (see below) and in your registration. The `model_id`
+    should have no spaces.
+-   `datetime`: forecast timestamp. Format `%Y-%m-%d %H:%M:%S`.
+-   `reference_datetime`: the start of the forecast (0 times steps into
+    the future). There should only be one value of reference_datetime in
+    the file. Format is `%Y-%m-%d %H:%M:%S`.
+-   `duration`: the time-step of the forecast. Use the value of P1D for
+    a daily forecast and PT1H for an hourly forecast.
+-   `site_id`: code for site.
+-   `family`: name of the probability distribution that is described by
+    the parameter values in the parameter column. For an ensemble
+    forecast, the `family` column uses the word `ensemble` to designate
+    that it is a ensemble forecast and the parameter column is the
+    ensemble member number (1, 2, 3 …). For a distribution forecast, the
+    `family` describes the type of distribution. For a parametric
+    forecast with a normal distribution, the `family` column uses the
+    word `normal` to designate a normal distribution and the parameter
+    column must have values of `mu` and `sigma` for each forecasted
+    variable, site_id, depth and time combination.
 
--   `bernoulli`: `prob`
+The following names and parameterization of the distribution are
+supported (family: parameters):
 
--   `beta`: `shape1`, `shape2`
+-   lognormal: mu, sigma
+-   normal: mu,sigma
+-   bernoulli: prob
+-   beta: shape1, shape2
+-   uniform: min, max
+-   gamma: shape, rate
+-   logistic: location, scale
+-   exponential: rate
+-   poisson: lambda
 
--   `uniform`: `min`, `max`
+If you are submitting a forecast that is not in the supported list
+above, we recommend using the ensemble format and sampling from your
+distribution to generate a set of ensemble members that represents your
+distribution.
 
--   `gamma`: `shape`, `rate`
-
--   `logistic`: `location`, `scale`
-
--   `exponential`: `rate`
-
--   `poisson`: `lambda`
-
-For forecasts that don’t follow one of the supported distributions we
-recommend using the ensemble format and sampling from your distribution
-to generate a set of ensemble members that represents your distribution.
-I will go through examples of both `ensemble` and `normal` forecasts as
-examples.
-
-The full list of required columns and format can be found in the
-[Challenge
-documentation](https://projects.ecoforecast.org/neon4cast-docs/Submission-Instructions.html).
+-   `parameter` the parameters for the distribution or the number of the
+    ensemble members.
+-   `variable`: standardized variable name.
+-   `prediction`: forecasted value.
 
 # 3 The forecasting workflow
 
@@ -445,6 +462,8 @@ targets_lm[2000:2010,]
     ## 10 neon4cast  BARC    2023-08-02 00:00:00 P1D             31.7            27.9
     ## 11 neon4cast  BARC    2023-08-03 00:00:00 P1D             31.9            28.1
 
+## 5.1 Generate a single site forecast
+
 Set up a dataframe for the results to go into. We will generate a
 forecast 35 days into the future
 
@@ -485,7 +504,7 @@ for (t in 1:length(forecast_dates)) {
     filter(datetime == forecast_dates[t])
   
   # use linear regression to forecast water temperature for each ensemble member
-  forecasted_temperature <- fit$coefficients[1] + fit$coefficients[2] * temp_driv$air_temperature
+  forecasted_temperature <- coeff[1] + coeff[2] * temp_driv$air_temperature
   # put all the relevant information into a tibble that we can bind together
   curr_site_df <- tibble(datetime = temp_driv$datetime,
                          site_id = example_site,
@@ -498,12 +517,12 @@ for (t in 1:length(forecast_dates)) {
 }
 ```
 
+## 5.2 Generate a forecast for multiple sites
+
 We can use a for loop to use the same workflow for each site to create a
 site-wise forecast of water temperature based on a linear model and each
 site’s forecasted air temperature. We can run this forecast for each
 site and then bind them together to submit as one forecast.
-
-## 5.1 Specify forecast model
 
 ``` r
 forecast_df <- NULL
@@ -573,28 +592,24 @@ Looking back at the forecasts we produced:
 
 ![](NEON_forecast_challenge_workshop_aquatics_files/figure-markdown_github/forecast-1.png)
 
-## 5.2 Convert to EFI standard for submission
+## 5.3 Convert to EFI standard for submission
 
 For an ensemble forecast the documentation specifies the following
-columns:
-
--   `datetime`: forecast timestamp for each time step
--   `reference_datetime`: The start of the forecast; this should be 0
-    times steps in the future. This should only be one value of
-    reference_datetime in the file
--   `site_id`: NEON code for site
--   `family`: name of probability distribution that is described by the
-    parameter values in the parameter column; only `normal` or
-    `ensemble` are currently allowed.
--   `parameter`: integer value for forecast replicate (from the `.rep`
-    in fable output);
--   `variable`: standardized variable name from the theme
--   `prediction`: forecasted value (from the `.sim` column in fable
-    output)
--   `model_id`: model name (no spaces). Any model_id that includes
-    ‘example’ will not be included in analysis. It will still be
-    evaluated against observations but will be deleted. This is good for
-    testing and trying out new modelling ideas.
+columns: - `project_id`: use `neon4cast`. - `datetime`: forecast
+timestamp for each time step - `reference_datetime`: The start of the
+forecast; this should be 0 times steps in the future. This should only
+be one value of reference_datetime in the file - `duration`: the
+time-step of the forecast. Use the value of P1D for a daily forecast and
+PT1H for an hourly forecast. - `site_id`: NEON code for site - `family`:
+name of probability distribution that is described by the parameter
+values in the parameter column; only `normal` or `ensemble` are
+currently allowed. - `parameter`: integer value for forecast replicate
+(from the `.rep` in fable output); - `variable`: standardized variable
+name from the theme - `prediction`: forecasted value (from the `.sim`
+column in fable output) - `model_id`: model name (no spaces). Any
+model_id that includes ‘example’ will not be included in analysis. It
+will still be evaluated against observations but will be deleted. This
+is good for testing and trying out new modelling ideas.
 
 We need to make sure the dataframe is in the correct format and then we
 can submit this to the challenge as well! This is an ensemble forecast
@@ -609,11 +624,13 @@ forecast_df_EFI <- forecast_df %>%
   mutate(model_id = my_model_id,
          reference_datetime = forecast_date,
          family = 'ensemble',
-         parameter = as.character(parameter)) %>%
-  select(datetime, reference_datetime, site_id, family, parameter, variable, prediction, model_id)
+         parameter = as.character(parameter), 
+         duration = 'P1D',
+         project_id = 'neon4cast') %>%
+  select(datetime, reference_datetime, duration, site_id, family, parameter, variable, prediction, model_id, project_id)
 ```
 
-## 5.3 Submit forecast
+## 5.4 Submit forecast
 
 Files need to be in the correct format for submission. The forecast
 organizers have created tools to help aid in the submission process.
@@ -655,12 +672,8 @@ neon4cast::forecast_output_validator( forecast_file)
     ## ✔ file has site_id column
     ## ✔ file has datetime column
     ## ✔ file has correct datetime column
-
-    ## Warning: file missing duration column (values for the column: daily = P1D,
-    ## 30min = PT30M)
-
-    ## Warning: file missing project_id column (use `neon4cast` as the project_id
-
+    ## ✔ file has duration column
+    ## ✔ file has project_id column
     ## ✔ file has reference_datetime column
     ## Forecast format is valid
 
@@ -682,7 +695,7 @@ uncertainty?
 
 ![](NEON_forecast_challenge_workshop_aquatics_files/figure-markdown_github/model-fit-1.png)
 
-## 5.4 TASKS
+## 5.5 TASKS
 
 Possible modifications to this very simple linear model:
 
@@ -697,7 +710,7 @@ Possible modifications to this very simple linear model:
 Remember to change the `model_id` so we can differentiate different
 forecasts!
 
-## 5.5 Register your participation
+## 5.6 Register your participation
 
 It’s really important that once you start submitting forecasts to the
 Challenge that you register your participation. We ask that you complete

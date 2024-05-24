@@ -150,8 +150,10 @@ forecast_df_EFI <- forecast_df %>%
   mutate(model_id = my_model_id,
          reference_datetime = forecast_date,
          family = 'ensemble',
-         parameter = as.character(parameter)) %>%
-  select(datetime, reference_datetime, site_id, family, parameter, variable, prediction, model_id)
+         duration = 'P1D',
+         parameter = as.character(parameter),
+         project_id = 'neon4cast') %>%
+  select(datetime, reference_datetime, duration, site_id, family, parameter, variable, prediction, model_id, project_id)
 #---------------------------#
 
 

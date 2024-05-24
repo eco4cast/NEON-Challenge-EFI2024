@@ -114,41 +114,35 @@ realizations of future conditions) or a distribution forecast (e.g. a
 normal distribution), specified in the family and parameter columns of
 the forecast file.
 
-For an ensemble forecast, the `family` column uses the word `ensemble`
-to designate that it is a ensemble forecast and the parameter column is
-the ensemble member number (1, 2, 3 ...). For a distribution forecast,
-the `family` column describes the type of distribution and the parameter
-column must have the parameterizations of that distribution for each
-forecasted variable, site_id, and datetime. The following distributions
-are currently supported by the Challenge (family:parameters):
+### File format
 
--   `lognormal`: `mu`, `sigma`
+The file is a csv format with the following columns:
 
--   `normal`: `mu`, `sigma`
+-   `project_id`: use `neon4cast`.
+-   `model_id`: the short name of the model defined as the `model_id` in the file name (see below) and in your registration. The `model_id` should have no spaces.
+-   `datetime`: forecast timestamp. Format `%Y-%m-%d %H:%M:%S`.
+-   `reference_datetime`: the start of the forecast (0 times steps into the future). There should only be one value of reference_datetime in the file. Format is `%Y-%m-%d %H:%M:%S`.
+-   `duration`: the time-step of the forecast. Use the value of P1D for a daily forecast and PT1H for an hourly forecast.
+-   `site_id`: code for site.
+-   `family`: name of the probability distribution that is described by the parameter values in the parameter column. For an ensemble forecast, the `family` column uses the word `ensemble` to designate that it is a ensemble forecast and the parameter column is the ensemble member number (1, 2, 3 ...). For a distribution forecast, the `family` describes the type of distribution. For a parametric forecast with a normal distribution, the `family` column uses the word `normal` to designate a normal distribution and the parameter column must have values of `mu` and `sigma` for each forecasted variable, site_id, depth and time combination.
 
--   `bernoulli`: `prob`
+The following names and parameterization of the distribution are supported (family: parameters):
 
--   `beta`: `shape1`, `shape2`
+-   lognormal: mu, sigma
+-   normal: mu,sigma
+-   bernoulli: prob
+-   beta: shape1, shape2
+-   uniform: min, max
+-   gamma: shape, rate
+-   logistic: location, scale
+-   exponential: rate
+-   poisson: lambda
 
--   `uniform`: `min`, `max`
+If you are submitting a forecast that is not in the supported list above, we recommend using the ensemble format and sampling from your distribution to generate a set of ensemble members that represents your distribution. 
 
--   `gamma`: `shape`, `rate`
-
--   `logistic`: `location`, `scale`
-
--   `exponential`: `rate`
-
--   `poisson`: `lambda`
-
-For forecasts that don't follow one of the supported distributions we
-recommend using the ensemble format and sampling from your distribution
-to generate a set of ensemble members that represents your distribution.
-I will go through examples of both `ensemble` and `normal` forecasts as
-examples.
-
-The full list of required columns and format can be found in the
-[Challenge
-documentation](https://projects.ecoforecast.org/neon4cast-docs/Submission-Instructions.html).
+-   `parameter` the parameters for the distribution or the number of the ensemble members.
+-   `variable`: standardized variable name.
+-   `prediction`: forecasted value.
 
 # The forecasting workflow
 
@@ -402,6 +396,7 @@ targets_lm <- targets |>
 
 targets_lm[2000:2010,]
 ```
+## Generate a single site forecast
 Set up a dataframe for the results to go into. We will generate a forecast 35 days into the future
 ```{r}
 forecast_df <- NULL
@@ -455,12 +450,13 @@ for (t in 1:length(forecast_dates)) {
 
 ```
 
+
+## Generate a forecast for multiple sites
+
 We can use a for loop to use the same workflow for each site to create a site-wise forecast of
 water temperature based on a linear model and each site's forecasted air
 temperature. We can run this forecast for each site and then bind them
 together to submit as one forecast.
-
-## Specify forecast model
 
 ```{r}
 forecast_df <- NULL
@@ -535,11 +531,12 @@ forecast_df %>%
 
 For an ensemble forecast the documentation specifies the following
 columns:
-
+-   `project_id`: use `neon4cast`.
 -   `datetime`: forecast timestamp for each time step
 -   `reference_datetime`: The start of the forecast; this should be 0
     times steps in the future. This should only be one value of
     reference_datetime in the file
+-   `duration`: the time-step of the forecast. Use the value of P1D for a daily forecast and PT1H for an hourly forecast.
 -   `site_id`: NEON code for site
 -   `family`: name of probability distribution that is described by the
     parameter values in the parameter column; only `normal` or
@@ -567,8 +564,10 @@ forecast_df_EFI <- forecast_df %>%
   mutate(model_id = my_model_id,
          reference_datetime = forecast_date,
          family = 'ensemble',
-         parameter = as.character(parameter)) %>%
-  select(datetime, reference_datetime, site_id, family, parameter, variable, prediction, model_id)
+         parameter = as.character(parameter), 
+         duration = 'P1D',
+         project_id = 'neon4cast') %>%
+  select(datetime, reference_datetime, duration, site_id, family, parameter, variable, prediction, model_id, project_id)
 ```
 
 ## Submit forecast

@@ -1,28 +1,17 @@
----
-title: "NEON forecast challenge submission"
-output: html_document
-date: "`r Sys.Date()`"
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-
-```{r load-packages, echo = F, warning=F, message=F}
 ## install.packages('remotes')
 ## install.packages('tidyverse') # collection of R packages for data manipulation, analysis, and visualisation
 ## install.packages('lubridate') # working with dates and times
 ## remotes::install_github('eco4cast/neon4cast') # package from NEON4cast challenge organisers to assist with forecast building and submission
 
-# Load packages
+# ------ Load packages -----
 library(tidyverse)
 library(lubridate)
-library(ggplot2); theme_set(theme_bw())
-```
+#--------------------------#
 
-```{r get-targets, message=F}
-#read in the targets data
+
+
+#------- Read data --------
+# read in the targets data
 targets <- read_csv('https://data.ecoforecast.org/neon4cast-targets/aquatics/aquatics-targets.csv.gz')
 
 # read in the sites data
@@ -37,19 +26,14 @@ focal_sites <- aquatic_sites |>
 targets <- targets %>%
   filter(site_id %in% focal_sites,
          variable == 'temperature')
-```
+#--------------------------#
 
-This is where you could change or add meteorological variables that are used to predict the target
 
-Other variable names can be found at <https://projects.ecoforecast.org/neon4cast-docs/Shared-Forecast-Drivers.html#stage-3>
 
-```{r}
+# ------ Weather data ------
 met_variables <- c("air_temperature")
-```
 
-```{r get-NOAA-past, message = F}
-
-# Past stacked weather
+# Past stacked weather -----
 weather_past_s3 <- neon4cast::noaa_stage3()
 
 weather_past <- weather_past_s3  |> 
@@ -66,10 +50,8 @@ weather_past_daily <- weather_past |>
   # convert air temperature to Celsius if it is included in the weather data
   mutate(prediction = ifelse(variable == "air_temperature", prediction - 273.15, prediction)) |> 
   pivot_wider(names_from = variable, values_from = prediction)
-```
 
-```{r get-NOAA-future, message = F}
-# Future weather
+# Future weather forecast --------
 # New forecast only available at 5am UTC the next day
 forecast_date <- Sys.Date() 
 noaa_date <- forecast_date - days(1)
@@ -91,24 +73,24 @@ weather_future_daily <- weather_future |>
   mutate(prediction = ifelse(variable == "air_temperature", prediction - 273.15, prediction)) |> 
   pivot_wider(names_from = variable, values_from = prediction) |> 
   select(any_of(c('datetime', 'site_id', met_variables, 'parameter')))
-```
 
-```{r model-setup}
+#--------------------------#
+
+
+
+# ----- Fit model & generate forecast----
 # Generate a dataframe to fit the model from 
 targets_lm <- targets |> 
   pivot_wider(names_from = 'variable', values_from = 'observation') |> 
   left_join(weather_past_daily, 
             by = c("datetime","site_id"))
 
-# Loop through each site and datetime to fit the model
+# Set up forecast df
 forecast_df <- NULL
-
-```
-
-```{r forecast-loop}
 forecast_horizon <- 35
 forecast_dates <- seq(from = ymd(forecast_date), to = ymd(forecast_date) + forecast_horizon, by = "day")
 
+# Loop through each site and datetime to fit the model
 for(i in 1:length(focal_sites)) {  
   
   example_site <- focal_sites[i]
@@ -153,15 +135,15 @@ for(i in 1:length(focal_sites)) {
   
   message(example_site, ' forecast run')
 }
-```
 
-Remember to change the model_id when you make changes to the model structure!
-
-```{r}
 my_model_id <- 'example_ID'
-```
 
-```{r make-standard}
+#--------------------------#
+
+
+
+#---- Covert to EFI standard ----
+
 # Make forecast fit the EFI standards
 forecast_df_EFI <- forecast_df %>%
   filter(datetime > forecast_date) %>%
@@ -170,39 +152,27 @@ forecast_df_EFI <- forecast_df %>%
          family = 'ensemble',
          parameter = as.character(parameter)) %>%
   select(datetime, reference_datetime, site_id, family, parameter, variable, prediction, model_id)
+#---------------------------#
 
-```
 
-```{r write-forecast}
+
+# ----- Submit forecast -----
 # Write the forecast to file
 theme <- 'aquatics'
 date <- forecast_df_EFI$reference_datetime[1]
-forecast_name_1 <- paste0(forecast_df_EFI$model_id[1], ".csv")
-forecast_file_1 <- paste(theme, date, forecast_name_1, sep = '-')
-forecast_file_1
+forecast_name <- paste0(forecast_df_EFI$model_id[1], ".csv")
+forecast_file <- paste(theme, date, forecast_name, sep = '-')
+
+write_csv(forecast_df_EFI, forecast_file)
+
+neon4cast::forecast_output_validator(forecast_file)
 
 
-write_csv(forecast_df_EFI, forecast_file_1)
-```
+neon4cast::submit(forecast_file =  forecast_file, ask = FALSE) # if ask = T (default), it will produce a pop-up box asking if you want to submit
+#--------------------------#
 
-Check that forecast format is valid
-
-```{r}
-neon4cast::forecast_output_validator(file.path('Forecasts',forecast_file_1))
-```
-
-Change eval = TRUE if you want to submit
-
-```{r submit-forecast, eval= FALSE)}
-
-neon4cast::submit(forecast_file = file.path('Forecasts', forecast_file_1), ask = FALSE) # if ask = T (default), it will produce a pop-up box asking if you want to submit
-
-```
-
-```{r plot-forecast}
 forecast_df_EFI |> 
   ggplot(aes(x=datetime, y=prediction, group = parameter)) +
   geom_line() +
   facet_wrap(~site_id) +
   labs(title = paste0('Forecast generated for ', forecast_df_EFI$variable[1], ' on ', forecast_df_EFI$reference_datetime[1]))
-```

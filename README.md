@@ -1,6 +1,6 @@
 # NEON Forecast Challenge Workshop Pre-Workshop Instructions
 
-This is a repository for materials to complete the NEON Ecological Forecasting Challenge workshop at EFI 2024. 
+This is a repository for materials for submitting forecasts to the NEON Ecological Forecasting Challenge at EFI 2024. 
 
 This EFI 2024 workshop is based on materials developed by Freya Olsson (see original and complete materials [here](https://github.com/OlssonF/NEON-forecast-challenge-workshop).
 

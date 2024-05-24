@@ -440,7 +440,7 @@ for (t in 1:length(forecast_dates)) {
     filter(datetime == forecast_dates[t])
   
   # use linear regression to forecast water temperature for each ensemble member
-  forecasted_temperature <- fit$coefficients[1] + fit$coefficients[2] * temp_driv$air_temperature
+  forecasted_temperature <- coeff[1] + coeff[2] * temp_driv$air_temperature
   # put all the relevant information into a tibble that we can bind together
   curr_site_df <- tibble(datetime = temp_driv$datetime,
                          site_id = example_site,

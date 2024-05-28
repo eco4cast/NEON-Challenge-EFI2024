@@ -4,10 +4,17 @@ This is a repository for materials for submitting forecasts to the NEON Ecologic
 
 This EFI 2024 workshop is based on materials developed by Freya Olsson (see original and complete materials [here](https://github.com/OlssonF/NEON-forecast-challenge-workshop)).
 
-The materials are split into three sections:
-
-1.  `workshop` - want to get started with making and submitting forecasts to the Challenge - start here!.  The workshop contains directories with materials associated with three different use-cases: the submitter, the organizer, and the synthesizer.
-2.  `your_forecast_code` - you've worked through the workshop materials and are ready to start making your own forecast model and learn about automating your forecast to submit a new forecast every day.
+The materials are split into two sections:
+  
+  1.  `workshop` - materials for participating in the EFI2024 NEON Forecasting Challenge workshop. Within this are three subdirectories that cover the Challenge from different perspectives:
+  
+  `submitter`: want to get started with making and submitting forecasts to the Challenge?
+  
+  `organizer`: interested in learning about the cyberinfrastructure underpinning the Challenge?
+  
+  `synthesizer`: aspire to improve understanding of ecological predictability across variables and temporal and spatial scales?
+  
+  2.  `your_forecast_code` - you've worked through the workshop materials and are ready to start making your own forecast model and learn about automating your forecast to submit a new forecast every day.
 
 Below are some pre-workshop instructions to make sure you are ready to go!
 
@@ -20,12 +27,15 @@ R version 4.2 is required to run the code in this workshop. You should also chec
 The following packages need to be installed using the following code.
 
 ```{r}
-install.packages('remotes')
-install.packages('arrow')
-install.packages('tidyverse') # collection of R packages for data manipulation, analysis, and visualisation
-remotes::install_github('eco4cast/neon4cast') # package from NEON4cast challenge organisers to assist with forecast building and submission
+install.packages('remotes') 
+
+install.packages('tidyverse') # collection of R packages for data manipulation, analysis, and visualization 
+
+install.packages('arrow') #see note below
+
+remotes::install_github('eco4cast/neon4cast') # package from neon4cast challenge organizers to assist with forecast building and submission 
 ```
-if you have issues installing the “arrow” package on Mac M1/2/3 chips use the following instructions: <https://github.com/eco4cast/neon4cast/issues/16#issuecomment-2116115540>
+Note: If you have issues installing the “arrow” package on Mac M1/2/3 chips use the following instructions: <https://github.com/eco4cast/neon4cast/issues/16#issuecomment-2116115540>
 
 
 ## 2. Get the code

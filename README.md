@@ -2,12 +2,12 @@
 
 This is a repository for materials for submitting forecasts to the NEON Ecological Forecasting Challenge at EFI 2024. 
 
-This EFI 2024 workshop is based on materials developed by Freya Olsson (see original and complete materials [here](https://github.com/OlssonF/NEON-forecast-challenge-workshop).
+This EFI 2024 workshop is based on materials developed by Freya Olsson (see original and complete materials [here](https://github.com/OlssonF/NEON-forecast-challenge-workshop)).
 
 The materials are split into three sections:
 
 1.  `workshop` - want to get started with making and submitting forecasts to the Challenge - start here!
-2.  `your_forecast_code` - you've made a model and submitted a forecast successfully? Automate your workflow to submit a new forecast every day
+2.  `your_forecast_code` - you've worked through the workshop materials and are ready to start making your own forecast model and learn about automating your forecast to submit a new forecast every day.
 
 Below are some pre-workshop instructions to make sure you are ready to go!
 

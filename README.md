@@ -6,7 +6,7 @@ This EFI 2024 workshop is based on materials developed by Freya Olsson (see orig
 
 The materials are split into three sections:
 
-1.  `workshop` - want to get started with making and submitting forecasts to the Challenge - start here!
+1.  `workshop` - want to get started with making and submitting forecasts to the Challenge - start here!.  The workshop contains directories with materials associated with three different use-cases: the submitter, the organizer, and the synthesizer.
 2.  `your_forecast_code` - you've worked through the workshop materials and are ready to start making your own forecast model and learn about automating your forecast to submit a new forecast every day.
 
 Below are some pre-workshop instructions to make sure you are ready to go!
@@ -21,10 +21,12 @@ The following packages need to be installed using the following code.
 
 ```{r}
 install.packages('remotes')
+install.packages('arrow')
 install.packages('tidyverse') # collection of R packages for data manipulation, analysis, and visualisation
-install.packages('lubridate') # working with dates and times
 remotes::install_github('eco4cast/neon4cast') # package from NEON4cast challenge organisers to assist with forecast building and submission
 ```
+if you have issues installing the “arrow” package on Mac M1/2/3 chips use the following instructions: <https://github.com/eco4cast/neon4cast/issues/16#issuecomment-2116115540>
+
 
 ## 2. Get the code
 
@@ -53,7 +55,7 @@ There are 3 options for getting the code locally so that you can run it, dependi
 
 More information on forking and cloning in R can be found at [happygitwithr](https://happygitwithr.com/fork-and-clone.html), a great resource to get you started using version control with RStudio.
 
-For the workshop you can follow along via the rmarkdown document (`workshop/NEON_forecast_challenge_workshop_aquatics.Rmd`) or the md (`workshop/NEON_forecast_challenge_workshop_aquatics.md`), both of which can be downloaded here or you can fork the whole repository.
+For the workshop you can follow along via the rmarkdown documents within each directory contained in the workshop directory.
 
 ## Optional: Use Docker
 

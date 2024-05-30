@@ -1,6 +1,6 @@
 # Organizing a forecasting challenge
 
-Here are example GitHub repositories that contain the cyberinfrastructure that supports the forecasting challenge
+Here are example GitHub repositories that contain the cyberinfrastructure that supports different forecasting challenges:
 
 -   <https://github.com/eco4cast/neon4cast-ci>
 -   <https://github.com/eco4cast/usgsrc4cast-ci>
@@ -106,11 +106,11 @@ jobs:
           source("baseline_models/run_terrestrial_baselines.R")
 ```
 
-You will need to add your S3 creditials to the [GitHub Secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) in the repo
+You will need to add your S3 creditials to the [GitHub Secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions) in the repo.
 
 ## Supporting functions
 
-The neon4cast package in a separate GitHub repo contains functions that are needed by forecast submitters. It is designed to be install as an R package (unlike the challege-ci repo).
+The neon4cast package in a separate GitHub repo contains functions that are needed by forecast submitters. It is designed to be installed as an R package (unlike the challenge-ci repo).
 
 <https://github.com/eco4cast/neon4cast>
 
@@ -118,7 +118,7 @@ The neon4cast package in a separate GitHub repo contains functions that are need
 remotes::install_github("eco4cast/neon4cast")
 ```
 
-The package contains the following functions
+The package contains the following functions:
 
 -   `submit()`: A function to upload a forecast to the submission S3 bucket. It has the S3 bucket information within the function and uses the `forecast_output_validator` function in the `neon4cast` package to valid that the forecast follows the require standards.
 

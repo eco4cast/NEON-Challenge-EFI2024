@@ -30,7 +30,7 @@ The forecasts, summaries, and scores are stored on the S3 storage as parquet fil
 5. reference_datetime: this is the date that a forecast was generated
 6. The actual parquet file sits within the last partition and contains all the site_ids that were forecasted
 
-The scores are organized slightly different because all datetimes are scored as the same time as new data is avaialable. Partition in this way is more efficient because all horizons in a forecast don't need to be repeatly scores when only one datetime within the forecast has new data.
+The scores are organized slightly different because all datetimes are scored as the same time as new data is available. Partitioning them this way is more efficient because all horizons in a forecast don't need to be repeatedly scored when only one datetime within the forecast has new data.
 
 1. project_id: this allows the separation of different forecasting challenges (neon4cast, vera4cast, etc.)
 2. duration: this allows the separation of variables with the same name but different scales of aggregation (i.e. daily carbon fluxes vs 30 minute carbon fluxes)
@@ -39,9 +39,11 @@ The scores are organized slightly different because all datetimes are scored as 
 5. datetime: this is the date that a forecast applies too
 6. The actual parquet file sits within the last partition and contains all the site_ids that were forecasted
 
-Here is an example all the partitions are represented in a path
+Here is an example when all the partitions are represented in a path:
 
 `scores/parquet/project_id=neon4cast/duration=P1D/variable=temperature/model_id=flareGLM/datetime=2024-01-01/part-0.parquet`
+
+But a path may go to any level of partition. But you cannot skip partitions.
 
 ## Find link to model
 
@@ -49,20 +51,20 @@ Here is an example all the partitions are represented in a path
 
 <https://radiantearth.github.io/stac-browser/#/external/raw.githubusercontent.com/eco4cast/challenge-catalogs/main/catalog.json?.language=en>
 
-Navigate to water temperature forecasts from the flareGLM model
+Navigate to water temperature scores from the flareGLM model. This includes the forecast summary statistics, observations and scores. 
 
 Under "Database Access for Daily Water_temperature". Click "Copy URL for S3"
 
 Link to code
 
 ```{r}
-s3_link <- 
+s3_link_scores <- 
 ```
 
 ## Access forecast scores
 
 ```{r}
-my_results <- arrow::open_dataset(s3_link)
+my_results <- arrow::open_dataset(s3_link_scores)
 df <- my_results |> 
   filter(site_id == "BARC",
          reference_datetime > as_date("2024-01-01")) |> 
@@ -75,7 +77,7 @@ glimpse(df)
 
 ## Visualize single forecast
 
-```{r}
+```{r single-forecast}
 df |> 
   filter(reference_datetime == as_date("2024-01-10")) |> 
   ggplot(aes(x = datetime)) +
@@ -85,6 +87,7 @@ df |>
   labs(x = "datetime", y = "water temperature (degree C)", title = "site_id: BARC") +
   theme_bw()
 ```
+
 ## Aggregated scores
 
 We can look at the mean score for the process model but this provides very little context for the quality of forecast. It is more informative to compare the score to the score from other models.
@@ -100,10 +103,12 @@ We will benchmark our process model forecast against to two "naive" baselines of
 
 <https://radiantearth.github.io/stac-browser/#/external/raw.githubusercontent.com/eco4cast/neon4cast-ci/main/catalog/scores/Aquatics/Daily_Water_temperature/collection.json>
 
+Because we need two different models we will use a higher partition:
 ```{r}
 all_models_link <- 
 ```
 
+And then use `filter()` before collecting:
 ```{r}
 all_results <- arrow::open_dataset(all_models_link)
 df_with_baselines <- all_results |> 
@@ -117,7 +122,7 @@ df_with_baselines <- all_results |>
 
 How do the forecasts look for a single `reference_datetime`
 
-```{r warnings = FALSE}
+```{r multiple-forecast, warnings = FALSE}
 df_with_baselines |> 
   filter(as_date(reference_datetime) == as_date("2024-01-10")) |> 
   ggplot(aes(x = datetime)) +
@@ -132,7 +137,7 @@ df_with_baselines |>
 
 We can first look at the aggregated scores (all reference_datetime and datetime combinations). Importantly, the code below uses `pivot_wider` and `pivot_longer` to ensure we only include `datetime` values where all three models provided forecasts. Otherwise there would be different periods from the three models in the aggregated score.
 
-```{r}
+```{r mean-scores}
 df_with_baselines |> 
   select(model_id, crps, datetime, reference_datetime) |> 
   pivot_wider(names_from = model_id, values_from = crps) |> 
@@ -148,7 +153,7 @@ df_with_baselines |>
 
 How does forecast performance change as forecasts extend farther in the future (increasing horizon), regardless of when the forecast was produced?
 
-```{r}
+```{r horizon-scores}
 df_with_baselines |> 
   mutate(horizon = as.numeric(datetime - reference_datetime)) |> 
   select(model_id, horizon, datetime, reference_datetime, crps) |> 
@@ -167,7 +172,7 @@ df_with_baselines |>
 
 How does forecast performance vary across the dates that the forecasts are generated, regardless of horizon?
 
-```{r}
+```{r refdatetime-scores}
 df_with_baselines |> 
   select(model_id, datetime, reference_datetime, crps) |> 
   pivot_wider(names_from = model_id, values_from = crps) |> 
